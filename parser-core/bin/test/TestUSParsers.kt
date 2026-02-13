@@ -1,7 +1,7 @@
-import com.pennywiseai.parser.core.TransactionType
-import com.pennywiseai.parser.core.test.ExpectedTransaction
-import com.pennywiseai.parser.core.test.ParserTestUtils
-import com.pennywiseai.parser.core.test.SimpleTestCase
+import com.mana.parser.core.TransactionType
+import com.mana.parser.core.test.ExpectedTransaction
+import com.mana.parser.core.test.ParserTestUtils
+import com.mana.parser.core.test.SimpleTestCase
 import org.junit.jupiter.api.*
 import java.math.BigDecimal
 

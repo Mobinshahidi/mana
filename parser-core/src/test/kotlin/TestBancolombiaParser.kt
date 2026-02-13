@@ -1,6 +1,6 @@
-package com.pennywiseai.parser.core.bank
+package com.mana.parser.core.bank
 
-import com.pennywiseai.parser.core.TransactionType
+import com.mana.parser.core.TransactionType
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

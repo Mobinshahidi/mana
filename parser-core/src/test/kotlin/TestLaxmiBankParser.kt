@@ -1,8 +1,8 @@
-import com.pennywiseai.parser.core.TransactionType
-import com.pennywiseai.parser.core.bank.LaxmiBankParser
-import com.pennywiseai.parser.core.test.ExpectedTransaction
-import com.pennywiseai.parser.core.test.ParserTestCase
-import com.pennywiseai.parser.core.test.ParserTestUtils
+import com.mana.parser.core.TransactionType
+import com.mana.parser.core.bank.LaxmiBankParser
+import com.mana.parser.core.test.ExpectedTransaction
+import com.mana.parser.core.test.ParserTestCase
+import com.mana.parser.core.test.ParserTestUtils
 import org.junit.jupiter.api.*
 import java.math.BigDecimal
 
