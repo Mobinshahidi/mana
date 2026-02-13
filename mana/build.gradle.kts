@@ -9,6 +9,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization") version "2.2.20"
 }
 
+
 android {
     namespace = "com.mana"
     compileSdk = 36
