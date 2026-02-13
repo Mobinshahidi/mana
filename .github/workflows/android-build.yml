@@ -1,0 +1,50 @@
+name: Android Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Decode keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > keystore.jks
+
+      - name: Write local.properties
+        run: |
+          cat <<EOF > local.properties
+          RSA_PUBLIC_KEY=
+          RELEASE_STORE_FILE=keystore.jks
+          RELEASE_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}
+          EOF
+
+      - name: Build all APK variants
+        run: |
+          ./gradlew :mana:assembleStandardDebug :mana:assembleStandardRelease :mana:assembleFdroidDebug :mana:assembleFdroidRelease
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: mana-apks
+          path: |
+            mana/build/outputs/apk/**/*.apk
+            mana/build/outputs/mapping/**
