@@ -1,0 +1,12 @@
+.gradle/
+build/
+**/build/
+local.properties
+.idea/
+*.iml
+.DS_Store
+keystore.properties
+*.jks
+*.keystore
+gradle-8.10.2/
+gradle-8.10.2-bin.zip

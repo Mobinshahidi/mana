@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">مانا</string>
+    <string name="nav_home">خانه</string>
+    <string name="nav_analytics">تحلیل</string>
+    <string name="nav_chat">چت</string>
+    <string name="nav_transactions">تراکنش ها</string>
+    <string name="nav_rules">قوانین</string>
+    <string name="nav_settings">تنظیمات</string>
+    <string name="nav_budgets">بودجه ها</string>
+    <string name="nav_accounts">حساب ها</string>
+    <string name="balance">موجودی</string>
+    <string name="recent_transactions">تراکنش های اخیر</string>
+    <string name="search_merchant">جستجوی پذیرنده</string>
+    <string name="ai_soon">دستیار هوشمند به زودی اضافه می شود</string>
+    <string name="send">ارسال</string>
+    <string name="your_message">پیام شما</string>
+    <string name="settings_language">زبان</string>
+    <string name="subscriptions">اشتراک ها</string>
+    <string name="rules_title">قوانین</string>
+    <string name="analytics_title">تحلیل</string>
+    <string name="transactions_title">تراکنش ها</string>
+    <string name="spending_trend">روند هزینه</string>
+    <string name="daily_heatmap">نقشه حرارتی روزانه</string>
+    <string name="settings_current">زبان فعلی: %1$s</string>
+    <string name="rules_preview">پیش نمایش اجرای قوانین</string>
+    <string name="rules_subtitle">قوانین دسته بندی خودکار</string>
+    <string name="subscriptions_empty">پرداخت های تکراری اینجا نمایش داده می شود</string>
+    <string name="accounts_subtitle">حساب های بانکی ایرانی</string>
+    <string name="budgets_subtitle">گروه های بودجه ماهانه</string>
+    <string name="export_csv">خروجی CSV</string>
+    <string name="export_pdf">خروجی PDF</string>
+    <string name="backup_restore">پشتیبان گیری</string>
+    <string name="biometric_available">قفل بیومتریک در دسترس است</string>
+    <string name="biometric_unavailable">قفل بیومتریک در دسترس نیست</string>
+</resources>

@@ -1,0 +1,71 @@
+name: Android Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Decode keystore
+        if: ${{ secrets.MANA_KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "$MANA_KEYSTORE_BASE64" | base64 -d > app/release-key.jks
+        env:
+          MANA_KEYSTORE_BASE64: ${{ secrets.MANA_KEYSTORE_BASE64 }}
+
+      - name: Create keystore.properties
+        if: ${{ secrets.MANA_KEYSTORE_BASE64 != '' }}
+        run: |
+          cat > keystore.properties <<EOF
+          MANA_KEYSTORE_FILE=./app/release-key.jks
+          MANA_KEYSTORE_PASSWORD=${{ secrets.MANA_KEYSTORE_PASSWORD }}
+          MANA_KEY_ALIAS=${{ secrets.MANA_KEY_ALIAS }}
+          MANA_KEY_PASSWORD=${{ secrets.MANA_KEY_PASSWORD }}
+          EOF
+
+      - name: Build release APK and AAB
+        run: ./gradlew assembleRelease bundleRelease
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+            LOG=$(git log --pretty=format:"- %s")
+          else
+            LOG=$(git log "$PREV_TAG"..HEAD --pretty=format:"- %s")
+          fi
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          echo "$LOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          body: |
+            ## Mana Release
+            ${{ steps.changelog.outputs.log }}
+          files: |
+            app/build/outputs/apk/release/*.apk
+            app/build/outputs/bundle/release/*.aab
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

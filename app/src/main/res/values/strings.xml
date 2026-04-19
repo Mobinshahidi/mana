@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mana</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_analytics">Analytics</string>
+    <string name="nav_chat">Chat</string>
+    <string name="nav_transactions">Transactions</string>
+    <string name="nav_rules">Rules</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_budgets">Budgets</string>
+    <string name="nav_accounts">Accounts</string>
+    <string name="balance">Balance</string>
+    <string name="recent_transactions">Recent Transactions</string>
+    <string name="search_merchant">Search merchant</string>
+    <string name="ai_soon">AI Assistant will be added soon</string>
+    <string name="send">Send</string>
+    <string name="your_message">Your message</string>
+    <string name="settings_language">Language</string>
+    <string name="subscriptions">Subscriptions</string>
+    <string name="rules_title">Rules</string>
+    <string name="analytics_title">Analytics</string>
+    <string name="transactions_title">Transactions</string>
+    <string name="spending_trend">Spending Trend</string>
+    <string name="daily_heatmap">Daily Heatmap</string>
+    <string name="settings_current">Current language: %1$s</string>
+    <string name="rules_preview">Rule dry-run preview</string>
+    <string name="rules_subtitle">Auto-categorization rules</string>
+    <string name="subscriptions_empty">Recurring payments will appear here</string>
+    <string name="accounts_subtitle">Iranian bank accounts</string>
+    <string name="budgets_subtitle">Monthly budget groups</string>
+    <string name="export_csv">Export CSV</string>
+    <string name="export_pdf">Export PDF</string>
+    <string name="backup_restore">Backup</string>
+    <string name="biometric_available">Biometric lock available</string>
+    <string name="biometric_unavailable">Biometric lock unavailable</string>
+</resources>
