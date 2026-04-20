@@ -2,11 +2,11 @@ package com.mana.tracker.ui.components
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.Rule
 import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Rule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -31,9 +31,9 @@ fun ManaScaffold(
     val items = listOf(
         Triple(ManaDestination.Home, Icons.Default.Home, R.string.nav_home),
         Triple(ManaDestination.Analytics, Icons.Default.Analytics, R.string.nav_analytics),
-        Triple(ManaDestination.Chat, Icons.Default.Chat, R.string.nav_chat),
-        Triple(ManaDestination.Transactions, Icons.Default.ReceiptLong, R.string.nav_transactions),
-        Triple(ManaDestination.Rules, Icons.Default.Rule, R.string.nav_rules),
+        Triple(ManaDestination.Chat, Icons.AutoMirrored.Filled.Chat, R.string.nav_chat),
+        Triple(ManaDestination.Transactions, Icons.AutoMirrored.Filled.ReceiptLong, R.string.nav_transactions),
+        Triple(ManaDestination.Rules, Icons.AutoMirrored.Filled.Rule, R.string.nav_rules),
         Triple(ManaDestination.Settings, Icons.Default.Settings, R.string.nav_settings)
     )
     val navBackStackEntry = navController.currentBackStackEntryAsState()

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
 data class TxFilterState(
     val query: String = "",
@@ -22,6 +23,7 @@ data class TxFilterState(
 )
 
 @HiltViewModel
+@OptIn(ExperimentalCoroutinesApi::class)
 class TransactionsViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository
 ) : ViewModel() {

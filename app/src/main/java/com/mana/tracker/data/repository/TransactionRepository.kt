@@ -18,6 +18,7 @@ import kotlinx.coroutines.withContext
 import java.security.MessageDigest
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.jvm.JvmSuppressWildcards
 
 @Singleton
 class TransactionRepository @Inject constructor(
@@ -25,7 +26,7 @@ class TransactionRepository @Inject constructor(
     private val transactionDao: TransactionDao,
     private val accountDao: AccountDao,
     private val parserStateDao: ParserStateDao,
-    private val bankParsers: List<BankSmsParser>
+    private val bankParsers: List<@JvmSuppressWildcards BankSmsParser>
 ) {
 
     fun observeRecent(): Flow<List<TransactionEntity>> = transactionDao.observeRecent()

@@ -17,7 +17,7 @@ class BackupManager @Inject constructor(
 
     suspend fun createBackup(): File = withContext(Dispatchers.IO) {
         val file = File(context.cacheDir, "mana_backup.manabackup")
-        val items = transactionDao.observeRecent(500)
+        transactionDao.observeRecent(500)
         file.writeText("mana-backup-v1\n")
         file
     }
