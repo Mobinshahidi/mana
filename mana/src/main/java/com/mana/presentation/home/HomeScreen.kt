@@ -1009,6 +1009,26 @@ tint = MaterialTheme.colorScheme.onSurfaceVariant
 )
 }
 }
+}
+Text(
+text = value,
+style = MaterialTheme.typography.titleLarge,
+fontWeight = FontWeight.SemiBold
+)
+
+if (showInfo) {
+AlertDialog(
+onDismissRequest = { showInfo = false },
+confirmButton = {
+TextButton(onClick = { showInfo = false }) {
+Text("باشه")
+}
+},
+title = { Text(label) },
+text = { Text(tooltip) }
+)
+}
+}
 
 @Composable
 private fun QuickActionsSection(
@@ -1038,6 +1058,49 @@ private fun QuickActionsSection(
 				onClick = onNavigateToBudgets
 			)
 		}
+
+		Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+			QuickActionButton(
+				modifier = Modifier.weight(1f),
+				label = "اشتراک‌ها",
+				icon = Icons.Default.CalendarToday,
+				onClick = onNavigateToSubscriptions
+			)
+			QuickActionButton(
+				modifier = Modifier.weight(1f),
+				label = "تنظیمات",
+				icon = Icons.Default.Settings,
+				onClick = onNavigateToSettings
+			)
+		}
+	}
+}
+
+@Composable
+private fun QuickActionButton(
+	modifier: Modifier = Modifier,
+	label: String,
+	icon: androidx.compose.ui.graphics.vector.ImageVector,
+	onClick: () -> Unit
+) {
+	FilledTonalButton(
+		onClick = onClick,
+		modifier = modifier.height(52.dp),
+		contentPadding = PaddingValues(horizontal = Spacing.sm)
+	) {
+		Icon(
+			imageVector = icon,
+			contentDescription = null,
+			modifier = Modifier.size(18.dp)
+		)
+		Spacer(modifier = Modifier.width(Spacing.xs))
+		Text(
+			text = label,
+			style = MaterialTheme.typography.bodyMedium,
+			fontWeight = FontWeight.Medium
+		)
+	}
+}
 
 		Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
 			QuickActionButton(
