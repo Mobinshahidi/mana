@@ -22,13 +22,8 @@ fun Application.configureRouting() {
 
     val registry = BankParserRegistry(
         listOf(
-            HDFCBankParser(), SBIBankParser(), ICICIBankParser(), AxisBankParser(), KotakBankParser(),
-            FederalBankParser(), IDFCFirstBankParser(), IDBIBankParser(), CanaraBankParser(), BankOfBarodaParser(),
-            BankOfIndiaParser(), IndianBankParser(), IndianOverseasBankParser(), CentralBankOfIndiaParser(),
-            CityUnionBankParser(), KarnatakaBankParser(), PNBBankParser(), UnionBankParser(), JKBankParser(),
-            AirtelPaymentsBankParser(), IPPBParser(), JioPaymentsBankParser(), JioPayParser(), JupiterBankParser(),
-            HSBCBankParser(), SliceParser(), LazyPayParser(), AMEXBankParser(), OneCardParser(), SouthIndianBankParser(),
-            UtkarshBankParser(), DBSBankParser(), JuspayParser()
+            MelliBankParser(), KeshavarziBankParser(), ParsianBankParser(),
+            ResalatBankParser(), RefahBankParser(), BluBankParser()
         )
     )
 

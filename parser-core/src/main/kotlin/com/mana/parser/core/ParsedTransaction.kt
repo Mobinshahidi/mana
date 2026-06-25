@@ -17,7 +17,7 @@ data class ParsedTransaction(
     val bankName: String,
     val transactionHash: String? = null,
     val isFromCard: Boolean = false,
-    val currency: String = "INR",
+    val currency: String = "IRR",
     val fromAccount: String? = null,
     val toAccount: String? = null
 ) {
