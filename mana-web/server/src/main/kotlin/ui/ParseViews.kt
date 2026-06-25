@@ -1,6 +1,8 @@
 package com.example.ui
 
 import com.mana.parser.core.ParsedTransaction
+import com.mana.parser.core.rule.SmartParser
+import com.mana.parser.core.rule.SmartParseResult
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.html.*
@@ -421,6 +423,285 @@ object ParseViews {
             parsed.merchant?.let { put("merchant", it) }
         }) else "" }
     }
+
+    // ========== Smart Parse (auto-detect bank & type) ==========
+
+    suspend fun ApplicationCall.respondSmartParsePage() {
+        respondHtml(HttpStatusCode.OK) {
+            head {
+                title { +"Mana AI - Smart SMS Parser" }
+                meta { charset = "utf-8" }
+                meta { name = "viewport"; content = "width=device-width, initial-scale=1" }
+                link { rel = "icon"; href = "/static/logo.png" }
+                script { src = "https://unpkg.com/htmx.org@1.9.12" }
+                style {
+                    unsafe {
+                        +"""
+                        :root { color-scheme: dark; }
+                        * { box-sizing: border-box; }
+                        body { background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif; margin: 0; line-height: 1.5; }
+                        .header { background: #0a0a0a; border-bottom: 1px solid #222; padding: 16px 0; margin-bottom: 24px; }
+                        .header-content { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; }
+                        .logo-section { display: flex; align-items: center; gap: 12px; }
+                        .logo-section a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+                        .logo { width: 40px; height: 40px; border-radius: 8px; }
+                        .logo-text { font-size: 20px; font-weight: 600; }
+                        .nav-links { display: flex; gap: 20px; align-items: center; }
+                        .nav-links a { color: #9ca3af; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; font-size: 14px; }
+                        .nav-links a:hover { color: #fff; }
+                        .nav-links a.active { color: #fff; font-weight: 500; }
+                        .nav-links svg { width: 20px; height: 20px; }
+                        .container { max-width: 900px; margin: 0 auto; padding: 24px; }
+                        h1 { margin: 0 0 6px 0; font-size: 22px; }
+                        .subtitle { color: #9ca3af; font-size: 14px; margin: 0 0 20px; }
+                        label { display: block; font-weight: 600; margin: 12px 0 6px; color: #fff; }
+                        input, textarea { width: 100%; padding: 12px; background: #0a0a0a; border: 1px solid #333; border-radius: 8px; font-size: 14px; color: #fff; }
+                        input:focus, textarea:focus { outline: none; border-color: #555; box-shadow: 0 0 0 3px rgba(255,255,255,0.06); }
+                        textarea { min-height: 200px; resize: vertical; font-family: monospace; }
+                        button { margin-top: 12px; padding: 10px 20px; background: #fff; color: #000; border: 1px solid #fff; border-radius: 8px; cursor: pointer; font-weight: 600; }
+                        button:hover { background: #000; color: #fff; }
+                        button:disabled { opacity: .6; cursor: not-allowed; }
+                        .card { background: #0a0a0a; border: 1px solid #222; border-radius: 10px; padding: 20px; margin-top: 16px; }
+                        .muted { color: #9ca3af; font-size: 12px; }
+                        .result-grid { display: grid; grid-template-columns: 140px 1fr; gap: 8px; }
+                        .result-grid .label { color: #9ca3af; }
+                        .result-grid .value { color: #fff; font-weight: 500; word-break: break-word; }
+                        .confidence-bar { height: 6px; border-radius: 3px; background: #333; margin: 4px 0; }
+                        .confidence-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, #10b981, #f59e0b); transition: width 0.3s; }
+                        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+                        .badge-income { background: #065f46; color: #10b981; }
+                        .badge-expense { background: #7f1d1d; color: #fca5a5; }
+                        .badge-unknown { background: #333; color: #9ca3af; }
+                        .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #222; }
+                        .detail-row:last-child { border-bottom: none; }
+                        .detail-label { color: #9ca3af; font-size: 13px; }
+                        .detail-value { color: #fff; font-weight: 500; font-size: 13px; }
+                        .message-type { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+                        .flash { border: 1px solid #f59e0b; background: #451a03; color: #fbbf24; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 13px; }
+                        .switch-link { font-size: 13px; color: #9ca3af; text-align: center; margin-top: 24px; }
+                        .switch-link a { color: #fff; }
+                        @media (max-width: 640px) {
+                            .header-content { flex-direction: column; gap: 16px; }
+                            .container { padding: 16px; }
+                            .result-grid { grid-template-columns: 1fr; }
+                        }
+                        """
+                    }
+                }
+            }
+            body {
+                div(classes = "header") {
+                    div(classes = "header-content") {
+                        div(classes = "logo-section") {
+                            a(href = "/") {
+                                img(src = "/static/logo.png", alt = "Mana AI", classes = "logo")
+                                span(classes = "logo-text") { +"Mana AI" }
+                            }
+                        }
+                        nav(classes = "nav-links") {
+                            a(href = "/tools/parse") { +"Sender Parser" }
+                            a(href = "/tools/smart-parse", classes = "active") { +"Smart Parser" }
+                            a(href = "/feedback") { +"Feedback" }
+                            a(href = "/roadmap") { +"Roadmap" }
+                            a(href = "https://github.com/Mobinshahidi/mana", target = "_blank") {
+                                unsafe { +"""<svg fill="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>""" }
+                            }
+                            a(href = "https://discord.gg/H3xWeMWjKQ", target = "_blank") {
+                                unsafe { +"""<svg fill="currentColor" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/></svg>""" }
+                            }
+                        }
+                    }
+                }
+
+                div(classes = "container") {
+                    h1 { +"Smart SMS Parser" }
+                    p(classes = "subtitle") { +"Paste any Iranian bank SMS message. Automatically detects bank, message type, and extracts all fields. No sender ID needed." }
+
+                    form {
+                        attributes["hx-post"] = "/htmx/smart-parse"
+                        attributes["hx-target"] = "#smart-result"
+                        attributes["hx-swap"] = "innerHTML"
+                        attributes["hx-indicator"] = "#smart-indicator"
+
+                        label { htmlFor = "sender"; +"Sender ID (optional - auto-detect works without it)" }
+                        input(type = InputType.text, name = "sender") { id = "smart-sender"; placeholder = "e.g., MELLI, BLU, RESALAT (optional)" }
+
+                        label { htmlFor = "smsBody"; +"Message Body" }
+                        textArea {
+                            id = "smart-smsBody"; name = "smsBody"; placeholder = """Paste the full SMS message here...
+
+Examples:
+بلو
+واریز پول
+عرشیا عزیز، 8,200,000 ریال به حساب شما نشست.
+موجودی: 100,029,351 ریال
+
+خرید500,000
+مانده2,542,509
+041001-12:29
+کارت8783*
+bki. ir
+
+بانک رفاه
+حساب207853186
+کارت5,000,000+
+مانده81,108,644"""; required = true
+                        }
+
+                        button(type = ButtonType.submit) { +"Auto-Detect & Parse" }
+                        span { id = "smart-indicator"; style = "display:none"; +"Parsing..." }
+                    }
+
+                    div(classes = "card") { id = "smart-result"; p(classes = "muted") { +"Paste a message and click 'Auto-Detect & Parse' to see results." } }
+
+                    div(classes = "switch-link") {
+                        +"Need to specify sender? Use the "
+                        a(href = "/tools/parse") { +"Sender Parser" }
+                        +" instead."
+                    }
+                }
+            }
+        }
+    }
+
+    fun FlowContent.renderSmartParseResult(result: SmartParseResult?, messageType: String, rawMessage: String) {
+        if (result == null || result.confidence < 0.1f) {
+            div {
+                div(classes = "flash") {
+                    b { +"No transaction detected." }
+                    +" This doesn't appear to be a financial transaction message. "
+                    +"Message type classified as: $messageType"
+                }
+                details {
+                    summary { +"Raw Message" }
+                    pre { +rawMessage }
+                }
+            }
+            return
+        }
+
+        val confPct = (result.confidence * 100).toInt().coerceIn(0, 100)
+        val typeBadge = when (result.type?.name) {
+            "INCOME" -> "badge badge-income"
+            "EXPENSE" -> "badge badge-expense"
+            else -> "badge badge-unknown"
+        }
+
+        div {
+            // Message type header
+            div(classes = "message-type") {
+                span { +"📋 " }
+                span(classes = typeBadge) { +result.type?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: messageType }
+                if (result.bankName != null) {
+                    span { +" at " }
+                    span { +result.bankName!! }
+                }
+            }
+
+            // Main result grid
+            div(classes = "card") {
+                div(classes = "result-grid") {
+                    div(classes = "label") { +"Amount" }
+                    div(classes = "value") { +formatSmartAmount(result.amount) }
+
+                    div(classes = "label") { +"Type" }
+                    div(classes = "value") {
+                        span(classes = typeBadge) { +result.type?.name?.lowercase()?.replaceFirstChar { it.uppercase() } ?: "Unknown" }
+                    }
+
+                    div(classes = "label") { +"Merchant" }
+                    div(classes = "value") { +smartNA(result.merchant) }
+
+                    div(classes = "label") { +"Bank" }
+                    div(classes = "value") { +smartNA(result.bankName) }
+
+                    div(classes = "label") { +"Account" }
+                    div(classes = "value") { +smartNA(result.accountLast4) }
+
+                    div(classes = "label") { +"Balance" }
+                    div(classes = "value") { +formatSmartAmount(result.balance) }
+
+                    div(classes = "label") { +"Reference" }
+                    div(classes = "value") { +smartNA(result.reference) }
+
+                    div(classes = "label") { +"Card TX" }
+                    div(classes = "value") { +if (result.isCardTransaction) "Yes" else "No" }
+
+                    div(classes = "label") { +"Confidence" }
+                    div {
+                        +"$confPct%"
+                        div(classes = "confidence-bar") {
+                            div(classes = "confidence-fill") { style = "width:${confPct}%" }
+                        }
+                    }
+                }
+            }
+
+            // Message type classification
+            div(classes = "card") {
+                h4 { +"Message Classification" }
+                val classifications = mapOf(
+                    "Message Type" to messageType,
+                    "Detected By Sender" to if (result.detectedBySender) "Yes" else "No (auto-detected)"
+                )
+                for ((label, value) in classifications) {
+                    div(classes = "detail-row") {
+                        span(classes = "detail-label") { +label }
+                        span(classes = "detail-value") { +value }
+                    }
+                }
+            }
+
+            // Extracted fields detail
+            val extractedFields = mutableMapOf<String, String>()
+            result.amount?.let { extractedFields["Amount"] = it.toPlainString() }
+            result.type?.let { extractedFields["Transaction Type"] = it.name }
+            result.merchant?.let { extractedFields["Merchant"] = it }
+            result.bankName?.let { extractedFields["Bank"] = it }
+            result.accountLast4?.let { extractedFields["Account/Card"] = it }
+            result.balance?.let { extractedFields["Balance After"] = it.toPlainString() }
+            result.reference?.let { extractedFields["Reference No"] = it }
+            extractedFields["Is Card Transaction"] = if (result.isCardTransaction) "Yes" else "No"
+
+            if (extractedFields.isNotEmpty()) {
+                div(classes = "card") {
+                    h4 { +"Extracted Fields" }
+                    for ((label, value) in extractedFields) {
+                        div(classes = "detail-row") {
+                            span(classes = "detail-label") { +label }
+                            span(classes = "detail-value") { +value }
+                        }
+                    }
+                }
+            }
+
+            details {
+                summary { +"Raw Message" }
+                pre { +rawMessage }
+            }
+
+            // Try the sender parser link
+            div(classes = "switch-link") {
+                +"Want to test with a specific bank sender? Use the "
+                a(href = "/tools/parse") { +"Sender Parser" }
+                +" instead."
+            }
+        }
+    }
+
+    private fun formatSmartAmount(amount: java.math.BigDecimal?): String {
+        if (amount == null) return "N/A"
+        return try {
+            val formatter = java.text.NumberFormat.getNumberInstance(java.util.Locale.US)
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 0
+            "IRR ${formatter.format(amount)}"
+        } catch (_: Exception) {
+            "IRR ${amount.toPlainString()}"
+        }
+    }
+
+    private fun smartNA(value: String?): String = value ?: "N/A"
 }
 
 
