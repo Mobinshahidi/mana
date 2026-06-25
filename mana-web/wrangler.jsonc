@@ -1,0 +1,46 @@
+{
+	"name": "mana-web",
+	"main": "src/worker.js",
+	"compatibility_date": "2025-11-20",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"routes": [
+		{
+			"pattern": "pennywise.querymind.pro",
+			"zone_name": "querymind.pro",
+			"custom_domain": true
+		}
+	],
+	"observability": {
+		"enabled": true
+	},
+	"containers": [
+		{
+			"class_name": "ManaContainer",
+			"image": "./Dockerfile",
+			"max_instances": 10
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "ManaContainer",
+				"name": "MANA_CONTAINER"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"new_sqlite_classes": [
+				"ManaContainer"
+			],
+			"tag": "v1"
+		}
+	],
+	"vars": {
+		"KTOR_ENV": "production"
+	},
+	"workers_dev": true,
+	"preview_urls": true
+}
