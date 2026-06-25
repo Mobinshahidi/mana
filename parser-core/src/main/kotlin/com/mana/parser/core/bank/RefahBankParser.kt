@@ -109,13 +109,7 @@ class RefahBankParser : BankParser() {
         // Extract account number from format like "حساب207853186"
         val accountPattern = Regex("""حساب\s*(\d+)""")
         accountPattern.find(message)?.let { match ->
-            val accountNumber = match.groupValues[1]
-            // Return last 4 digits if available, otherwise return the whole number
-            return if (accountNumber.length >= 4) {
-                accountNumber.takeLast(4)
-            } else {
-                accountNumber
-            }
+            return match.groupValues[1]
         }
 
         return null

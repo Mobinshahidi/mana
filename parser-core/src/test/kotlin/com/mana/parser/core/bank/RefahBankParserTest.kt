@@ -35,7 +35,7 @@ class RefahBankParserTest {
                     type = TransactionType.INCOME,
                     merchant = "Card Transaction",
                     balance = BigDecimal("81108644"),
-                    accountLast4 = "53186"
+                    accountLast4 = "207853186"
                 )
             ),
             ParserTestCase(
@@ -52,7 +52,7 @@ class RefahBankParserTest {
                     type = TransactionType.EXPENSE,
                     merchant = "Purchase",
                     balance = BigDecimal("76108644"),
-                    accountLast4 = "53186"
+                    accountLast4 = "207853186"
                 )
             ),
             ParserTestCase(
@@ -70,7 +70,7 @@ class RefahBankParserTest {
                     type = TransactionType.EXPENSE,
                     merchant = "Withdrawal",
                     balance = BigDecimal("108009244"),
-                    accountLast4 = "53186"
+                    accountLast4 = "207853186"
                 )
             ),
             ParserTestCase(
@@ -87,7 +87,7 @@ class RefahBankParserTest {
                     type = TransactionType.INCOME,
                     merchant = "Card Transaction",
                     balance = BigDecimal("75780644"),
-                    accountLast4 = "53186"
+                    accountLast4 = "207853186"
                 )
             )
         )
