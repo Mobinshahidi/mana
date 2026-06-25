@@ -1,7 +1,7 @@
-name: Build Signed APK
+name: Build Signed Release APK
 
 on:
-  workflow_dispatch:  # Manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
@@ -30,30 +30,28 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
 
-    - name: Decode Debug Keystore
-      env:
-        DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+    - name: Decode Release Keystore
       run: |
-        echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > debug.keystore
-        echo "✅ Debug keystore created"
+        base64 -d < mana-release.jks.b64 > app/release.keystore
+        echo "Release keystore created"
 
     - name: Make Gradle executable
       run: chmod +x gradlew
 
-    - name: Build Debug APK with Custom Keystore
+    - name: Build Signed Release APK
       env:
-        KEYSTORE_PASSWORD: android
-        KEY_ALIAS: androiddebugkey
-        KEY_PASSWORD: android
+        KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
       run: |
         ./gradlew assembleStandardRelease \
-          -Pandroid.injected.signing.store.file=${{ github.workspace }}/debug.keystore \
-          -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
-          -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
-          -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+          -Pandroid.injected.signing.store.file=${{ github.workspace }}/app/release.keystore \
+          -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
+          -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+          -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
     - name: Upload Signed APK
       uses: actions/upload-artifact@v4
       with:
-        name: Signed-APK
+        name: signed-release-apk
         path: app/build/outputs/apk/standard/release/
