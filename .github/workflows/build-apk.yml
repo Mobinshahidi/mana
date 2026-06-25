@@ -42,4 +42,6 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: debug-apk
-        path: app/build/outputs/apk/debug/
+        path: |
+          app/build/outputs/apk/fdroid/debug/
+          app/build/outputs/apk/standard/debug/
