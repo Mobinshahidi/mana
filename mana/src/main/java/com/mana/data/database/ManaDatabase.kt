@@ -400,37 +400,33 @@ FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
 // Create indices for rule_applications
 db.execSQL("CREATE INDEX IF NOT EXISTS index_rule_applications_rule_id ON rule_applications (rule_id)")
 db.execSQL("CREATE INDEX IF NOT EXISTS index_rule_applications_transaction_id ON rule_applications (transaction_id)")
-db.execSQL("CREATE INDEX IF NOT EXISTS index_rule_applications_applied_at ON rule_applications (applied_at)")
-}
-}
-}
+  val MIGRATION_31_33 = object : Migration(31, 33) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+      db.execSQL("CREATE TABLE IF NOT EXISTS `user_banks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `sender_numbers` TEXT NOT NULL, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL)")
+      db.execSQL("CREATE TABLE IF NOT EXISTS `sms_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bank_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `transaction_type` TEXT, `type_keywords` TEXT, `amount_regex` TEXT, `balance_regex` TEXT, `account_regex` TEXT, `merchant_regex` TEXT, `reference_regex` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, FOREIGN KEY (`bank_id`) REFERENCES `user_banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+      db.execSQL("CREATE INDEX IF NOT EXISTS `index_sms_templates_bank_id` ON `sms_templates` (`bank_id`)")
+    }
+  }
 
-/**
-* Example AutoMigrationSpec for renaming tables or columns.
-* Uncomment and modify when needed.
-*/
-// @RenameTable(fromTableName = "transactions", toTableName = "user_transactions")
-// @RenameColumn(
-// tableName = "transactions",
-// fromColumnName = "merchant_name",
-// toColumnName = "vendor_name"
-// )
-// class Migration1To2 : AutoMigrationSpec {
-// override fun onPostMigrate(db: SupportSQLiteDatabase) {
-// // Perform additional operations after migration if needed
-// // Example: Update default values, create indexes, etc.
-// }
-// }
-
-val MIGRATION_31_33 = object : Migration(31, 33) {
-override fun migrate(db: SupportSQLiteDatabase) {
-db.execSQL("CREATE TABLE IF NOT EXISTS `user_banks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `sender_numbers` TEXT NOT NULL, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL)")
-db.execSQL("CREATE TABLE IF NOT EXISTS `sms_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bank_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `transaction_type` TEXT, `type_keywords` TEXT, `amount_regex` TEXT, `balance_regex` TEXT, `account_regex` TEXT, `merchant_regex` TEXT, `reference_regex` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, FOREIGN KEY (`bank_id`) REFERENCES `user_banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
-db.execSQL("CREATE INDEX IF NOT EXISTS `index_sms_templates_bank_id` ON `sms_templates` (`bank_id`)")
-}
-}
-
-val MIGRATION_32_33 = MIGRATION_31_33
+  val MIGRATION_32_33 = MIGRATION_31_33
+  }
+  
+  /**
+   * Example AutoMigrationSpec for renaming tables or columns.
+   * Uncomment and modify when needed.
+   */
+  // @RenameTable(fromTableName = "transactions", toTableName = "user_transactions")
+  // @RenameColumn(
+  //   tableName = "transactions",
+  //   fromColumnName = "merchant_name",
+  //   toColumnName = "vendor_name"
+  // )
+  // class Migration1To2 : AutoMigrationSpec {
+  //   override fun onPostMigrate(db: SupportSQLiteDatabase) {
+  //     // Perform additional operations after migration if needed
+  //     // Example: Update default values, create indexes, etc.
+  //   }
+  // }
 }
 
 /**

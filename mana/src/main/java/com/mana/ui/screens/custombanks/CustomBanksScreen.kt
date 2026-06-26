@@ -32,15 +32,11 @@ fun CustomBanksScreen(
     val banks by viewModel.banks.collectAsStateWithLifecycle()
 
     ManaScaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Custom Banks") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+        title = "Custom Banks",
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddBank) {

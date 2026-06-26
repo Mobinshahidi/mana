@@ -2,7 +2,7 @@ package com.mana.tracker.ui.screens.custombanks
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,15 +34,11 @@ fun AddEditBankScreen(
     }
 
     ManaScaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (bankId > 0) "Edit Bank" else "Add Bank") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+        title = if (bankId > 0) "Edit Bank" else "Add Bank",
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
         }
     ) { padding ->
         Column(

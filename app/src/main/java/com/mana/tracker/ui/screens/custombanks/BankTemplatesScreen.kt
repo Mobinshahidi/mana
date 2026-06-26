@@ -35,15 +35,11 @@ fun BankTemplatesScreen(
     }
 
     ManaScaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(uiState.bank?.name ?: "SMS Templates") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+        title = uiState.bank?.name ?: "SMS Templates",
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = { onAddTemplate(bankId) }) {

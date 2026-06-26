@@ -7,7 +7,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
@@ -42,15 +42,11 @@ fun AddEditTemplateScreen(
     }
 
     ManaScaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(if (templateId > 0) "Edit Template" else "Add Template") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
+        title = if (templateId > 0) "Edit Template" else "Add Template",
+        navigationIcon = {
+            IconButton(onClick = onNavigateBack) {
+                Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+            }
         }
     ) { padding ->
         Column(
