@@ -104,6 +104,7 @@ abstract fun ruleApplicationDao(): RuleApplicationDao
 abstract fun exchangeRateDao(): ExchangeRateDao
 abstract fun budgetDao(): BudgetDao
 abstract fun transactionSplitDao(): TransactionSplitDao
+abstract fun categoryBudgetLimitDao(): CategoryBudgetLimitDao
 abstract fun userBankDao(): UserBankDao
 abstract fun smsTemplateDao(): SmsTemplateDao
 
@@ -420,6 +421,16 @@ db.execSQL("CREATE INDEX IF NOT EXISTS index_rule_applications_applied_at ON rul
 // // Example: Update default values, create indexes, etc.
 // }
 // }
+
+val MIGRATION_31_33 = object : Migration(31, 33) {
+override fun migrate(db: SupportSQLiteDatabase) {
+db.execSQL("CREATE TABLE IF NOT EXISTS `user_banks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `sender_numbers` TEXT NOT NULL, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL)")
+db.execSQL("CREATE TABLE IF NOT EXISTS `sms_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bank_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `transaction_type` TEXT, `type_keywords` TEXT, `amount_regex` TEXT, `balance_regex` TEXT, `account_regex` TEXT, `merchant_regex` TEXT, `reference_regex` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, FOREIGN KEY (`bank_id`) REFERENCES `user_banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+db.execSQL("CREATE INDEX IF NOT EXISTS `index_sms_templates_bank_id` ON `sms_templates` (`bank_id`)")
+}
+}
+
+val MIGRATION_32_33 = MIGRATION_31_33
 }
 
 /**
@@ -472,15 +483,6 @@ VALUES (?, ?, 1, ?, ?, datetime('now'), datetime('now'))
 """.trimIndent(), arrayOf<Any>(name, color, if (isIncome) 1 else 0, index + 1))
 }
 }
-
-val MIGRATION_31_33 = object : Migration(31, 33) {
-override fun migrate(db: SupportSQLiteDatabase) {
-db.execSQL("CREATE TABLE IF NOT EXISTS `user_banks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `sender_numbers` TEXT NOT NULL, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL)")
-db.execSQL("CREATE TABLE IF NOT EXISTS `sms_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bank_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `transaction_type` TEXT, `type_keywords` TEXT, `amount_regex` TEXT, `balance_regex` TEXT, `account_regex` TEXT, `merchant_regex` TEXT, `reference_regex` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, FOREIGN KEY (`bank_id`) REFERENCES `user_banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
-db.execSQL("CREATE INDEX IF NOT EXISTS `index_sms_templates_bank_id` ON `sms_templates` (`bank_id`)")
-}
-
-val MIGRATION_32_33 = MIGRATION_31_33
 }
 
 /**

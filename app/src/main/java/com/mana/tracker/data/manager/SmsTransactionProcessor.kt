@@ -437,7 +437,10 @@ class SmsTransactionProcessor @Inject constructor(
             when (it) {
                 com.mana.parser.core.TransactionType.INCOME -> com.mana.parser.core.TransactionType.INCOME
                 com.mana.parser.core.TransactionType.EXPENSE -> com.mana.parser.core.TransactionType.EXPENSE
+                com.mana.parser.core.TransactionType.CREDIT -> com.mana.parser.core.TransactionType.CREDIT
                 com.mana.parser.core.TransactionType.TRANSFER -> com.mana.parser.core.TransactionType.TRANSFER
+                com.mana.parser.core.TransactionType.INVESTMENT -> com.mana.parser.core.TransactionType.INVESTMENT
+                com.mana.parser.core.TransactionType.BALANCE_UPDATE -> com.mana.parser.core.TransactionType.BALANCE_UPDATE
             }
         } ?: com.mana.parser.core.TransactionType.TRANSFER
         val safeBank = bankName ?: sender
