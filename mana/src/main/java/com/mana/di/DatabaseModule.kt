@@ -18,7 +18,9 @@ import com.mana.data.database.dao.RuleDao
 import com.mana.data.database.dao.SubscriptionDao
 import com.mana.data.database.dao.TransactionDao
 import com.mana.data.database.dao.TransactionSplitDao
+import com.mana.data.database.dao.SmsTemplateDao
 import com.mana.data.database.dao.UnrecognizedSmsDao
+import com.mana.data.database.dao.UserBankDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -236,6 +238,18 @@ object DatabaseModule {
     @Singleton
     fun provideCategoryBudgetLimitDao(database: ManaDatabase): CategoryBudgetLimitDao {
         return database.categoryBudgetLimitDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideUserBankDao(database: ManaDatabase): UserBankDao {
+        return database.userBankDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSmsTemplateDao(database: ManaDatabase): SmsTemplateDao {
+        return database.smsTemplateDao()
     }
 }
 

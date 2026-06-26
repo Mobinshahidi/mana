@@ -21,8 +21,10 @@ import com.mana.tracker.data.database.dao.RuleApplicationDao
 import com.mana.tracker.data.database.dao.RuleDao
 import com.mana.tracker.data.database.dao.SubscriptionDao
 import com.mana.tracker.data.database.dao.TransactionDao
+import com.mana.tracker.data.database.dao.SmsTemplateDao
 import com.mana.tracker.data.database.dao.TransactionSplitDao
 import com.mana.tracker.data.database.dao.UnrecognizedSmsDao
+import com.mana.tracker.data.database.dao.UserBankDao
 import com.mana.tracker.data.database.entity.AccountBalanceEntity
 import com.mana.tracker.data.database.entity.BudgetCategoryEntity
 import com.mana.tracker.data.database.entity.BudgetEntity
@@ -36,8 +38,10 @@ import com.mana.tracker.data.database.entity.RuleApplicationEntity
 import com.mana.tracker.data.database.entity.RuleEntity
 import com.mana.tracker.data.database.entity.SubscriptionEntity
 import com.mana.tracker.data.database.entity.TransactionEntity
+import com.mana.tracker.data.database.entity.SmsTemplateEntity
 import com.mana.tracker.data.database.entity.TransactionSplitEntity
 import com.mana.tracker.data.database.entity.UnrecognizedSmsEntity
+import com.mana.tracker.data.database.entity.UserBankEntity
 
 /**
  * The Mana Room database.
@@ -50,8 +54,8 @@ import com.mana.tracker.data.database.entity.UnrecognizedSmsEntity
  * @property autoMigrations List of automatic migrations between versions.
  */
 @Database(
-    entities = [TransactionEntity::class, SubscriptionEntity::class, ChatMessage::class, MerchantMappingEntity::class, CategoryEntity::class, AccountBalanceEntity::class, UnrecognizedSmsEntity::class, CardEntity::class, RuleEntity::class, RuleApplicationEntity::class, ExchangeRateEntity::class, BudgetEntity::class, BudgetCategoryEntity::class, TransactionSplitEntity::class, CategoryBudgetLimitEntity::class],
-    version = 32,
+    entities = [TransactionEntity::class, SubscriptionEntity::class, ChatMessage::class, MerchantMappingEntity::class, CategoryEntity::class, AccountBalanceEntity::class, UnrecognizedSmsEntity::class, CardEntity::class, RuleEntity::class, RuleApplicationEntity::class, ExchangeRateEntity::class, BudgetEntity::class, BudgetCategoryEntity::class, TransactionSplitEntity::class, CategoryBudgetLimitEntity::class, UserBankEntity::class, SmsTemplateEntity::class],
+    version = 33,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2),
@@ -81,7 +85,8 @@ import com.mana.tracker.data.database.entity.UnrecognizedSmsEntity
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
         AutoMigration(from = 30, to = 31),
-        AutoMigration(from = 31, to = 32)
+        AutoMigration(from = 31, to = 32),
+        AutoMigration(from = 32, to = 33)
     ]
 )
 @TypeConverters(Converters::class)
@@ -99,7 +104,8 @@ abstract class ManaDatabase : RoomDatabase() {
     abstract fun exchangeRateDao(): ExchangeRateDao
     abstract fun budgetDao(): BudgetDao
     abstract fun transactionSplitDao(): TransactionSplitDao
-    abstract fun categoryBudgetLimitDao(): CategoryBudgetLimitDao
+    abstract fun userBankDao(): UserBankDao
+    abstract fun smsTemplateDao(): SmsTemplateDao
     
     companion object {
         const val DATABASE_NAME = "mana_database"

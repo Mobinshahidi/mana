@@ -11,6 +11,7 @@ import com.mana.tracker.data.database.entity.TransactionEntity
 import com.mana.tracker.data.database.entity.TransactionType
 import com.mana.tracker.data.mapper.toEntity
 import com.mana.tracker.data.mapper.toEntityType
+import com.mana.tracker.data.parser.CustomSmsParser
 import com.mana.tracker.data.repository.AccountBalanceRepository
 import com.mana.tracker.data.repository.CardRepository
 import com.mana.tracker.data.repository.MerchantMappingRepository
@@ -38,7 +39,8 @@ class SmsTransactionProcessor @Inject constructor(
     private val merchantMappingRepository: MerchantMappingRepository,
     private val subscriptionRepository: SubscriptionRepository,
     private val ruleRepository: RuleRepository,
-    private val ruleEngine: RuleEngine
+    private val ruleEngine: RuleEngine,
+    private val customSmsParser: CustomSmsParser
 ) {
     companion object {
         private const val TAG = "SmsTransactionProcessor"
@@ -67,6 +69,14 @@ class SmsTransactionProcessor @Inject constructor(
         timestamp: Long
     ): ProcessingResult {
         try {
+            // Try custom user-defined parser first
+            val customResult = customSmsParser.parse(body, sender)
+            if (customResult != null) {
+                val parsedTransaction = customResult.toParsedTransaction(sender, timestamp)
+                Log.d(TAG, "Custom parser matched: ${parsedTransaction.amount} from ${parsedTransaction.bankName}")
+                return saveParsedTransaction(parsedTransaction, body)
+            }
+
             // Get the appropriate parser for this sender
             val parser = BankParserFactory.getParser(sender)
             if (parser == null) {
@@ -416,5 +426,33 @@ class SmsTransactionProcessor @Inject constructor(
         return MessageDigest.getInstance("MD5")
             .digest(data.toByteArray())
             .joinToString("") { "%02x".format(it) }
+    }
+
+    private fun com.mana.parser.core.rule.SmartParseResult.toParsedTransaction(
+        sender: String,
+        timestamp: Long
+    ): ParsedTransaction {
+        val safeAmount = amount ?: BigDecimal.ZERO
+        val safeType = type?.let {
+            when (it) {
+                com.mana.parser.core.TransactionType.INCOME -> com.mana.parser.core.TransactionType.INCOME
+                com.mana.parser.core.TransactionType.EXPENSE -> com.mana.parser.core.TransactionType.EXPENSE
+                com.mana.parser.core.TransactionType.TRANSFER -> com.mana.parser.core.TransactionType.TRANSFER
+            }
+        } ?: com.mana.parser.core.TransactionType.TRANSFER
+        val safeBank = bankName ?: sender
+        return ParsedTransaction(
+            amount = safeAmount,
+            type = safeType,
+            merchant = merchant,
+            reference = reference,
+            accountLast4 = accountLast4,
+            balance = balance,
+            smsBody = rawMessage,
+            sender = sender,
+            timestamp = timestamp,
+            bankName = safeBank,
+            currency = "IRR"
+        )
     }
 }

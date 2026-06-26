@@ -21,8 +21,10 @@ import com.mana.data.database.dao.RuleApplicationDao
 import com.mana.data.database.dao.RuleDao
 import com.mana.data.database.dao.SubscriptionDao
 import com.mana.data.database.dao.TransactionDao
+import com.mana.data.database.dao.SmsTemplateDao
 import com.mana.data.database.dao.TransactionSplitDao
 import com.mana.data.database.dao.UnrecognizedSmsDao
+import com.mana.data.database.dao.UserBankDao
 import com.mana.data.database.entity.AccountBalanceEntity
 import com.mana.data.database.entity.BudgetCategoryEntity
 import com.mana.data.database.entity.BudgetEntity
@@ -36,8 +38,10 @@ import com.mana.data.database.entity.RuleApplicationEntity
 import com.mana.data.database.entity.RuleEntity
 import com.mana.data.database.entity.SubscriptionEntity
 import com.mana.data.database.entity.TransactionEntity
+import com.mana.data.database.entity.SmsTemplateEntity
 import com.mana.data.database.entity.TransactionSplitEntity
 import com.mana.data.database.entity.UnrecognizedSmsEntity
+import com.mana.data.database.entity.UserBankEntity
 
 /**
 * The Mana Room database.
@@ -50,8 +54,8 @@ import com.mana.data.database.entity.UnrecognizedSmsEntity
 * @property autoMigrations List of automatic migrations between versions.
 */
 @Database(
-entities = [TransactionEntity::class, SubscriptionEntity::class, ChatMessage::class, MerchantMappingEntity::class, CategoryEntity::class, AccountBalanceEntity::class, UnrecognizedSmsEntity::class, CardEntity::class, RuleEntity::class, RuleApplicationEntity::class, ExchangeRateEntity::class, BudgetEntity::class, BudgetCategoryEntity::class, TransactionSplitEntity::class, CategoryBudgetLimitEntity::class],
-version = 32,
+entities = [TransactionEntity::class, SubscriptionEntity::class, ChatMessage::class, MerchantMappingEntity::class, CategoryEntity::class, AccountBalanceEntity::class, UnrecognizedSmsEntity::class, CardEntity::class, RuleEntity::class, RuleApplicationEntity::class, ExchangeRateEntity::class, BudgetEntity::class, BudgetCategoryEntity::class, TransactionSplitEntity::class, CategoryBudgetLimitEntity::class, UserBankEntity::class, SmsTemplateEntity::class],
+version = 33,
 exportSchema = true,
 autoMigrations = [
 AutoMigration(from = 1, to = 2),
@@ -81,7 +85,8 @@ AutoMigration(from = 27, to = 28, spec = Migration27To28::class),
 AutoMigration(from = 28, to = 29),
 AutoMigration(from = 29, to = 30),
 AutoMigration(from = 30, to = 31),
-AutoMigration(from = 31, to = 32)
+AutoMigration(from = 31, to = 32),
+AutoMigration(from = 32, to = 33)
 ]
 )
 @TypeConverters(Converters::class)
@@ -99,7 +104,8 @@ abstract fun ruleApplicationDao(): RuleApplicationDao
 abstract fun exchangeRateDao(): ExchangeRateDao
 abstract fun budgetDao(): BudgetDao
 abstract fun transactionSplitDao(): TransactionSplitDao
-abstract fun categoryBudgetLimitDao(): CategoryBudgetLimitDao
+abstract fun userBankDao(): UserBankDao
+abstract fun smsTemplateDao(): SmsTemplateDao
 
 companion object {
 const val DATABASE_NAME = "mana_database"
