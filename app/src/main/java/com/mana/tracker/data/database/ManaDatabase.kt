@@ -85,8 +85,8 @@ import com.mana.tracker.data.database.entity.UserBankEntity
         AutoMigration(from = 28, to = 29),
         AutoMigration(from = 29, to = 30),
         AutoMigration(from = 30, to = 31),
-        AutoMigration(from = 31, to = 32),
-        AutoMigration(from = 32, to = 33)
+        // v31 to v32: manual migration — adds user_banks and sms_templates tables
+        // v32 to v33: same schema, no auto-migration needed (version bump only)
     ]
 )
 @TypeConverters(Converters::class)
@@ -131,7 +131,9 @@ abstract class ManaDatabase : RoomDatabase() {
                         MIGRATION_14_15,
                         MIGRATION_20_21,
                         MIGRATION_21_22,
-                        MIGRATION_22_23
+                        MIGRATION_22_23,
+                        MIGRATION_31_33,
+                        MIGRATION_32_33
                     )
                     .build()
                 INSTANCE = instance
@@ -470,6 +472,16 @@ class Migration7To8 : AutoMigrationSpec {
             """.trimIndent(), arrayOf<Any>(name, color, if (isIncome) 1 else 0, index + 1))
         }
     }
+
+    val MIGRATION_31_33 = object : Migration(31, 33) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `user_banks` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `sender_numbers` TEXT NOT NULL, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL)")
+            db.execSQL("CREATE TABLE IF NOT EXISTS `sms_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bank_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `transaction_type` TEXT, `type_keywords` TEXT, `amount_regex` TEXT, `balance_regex` TEXT, `account_regex` TEXT, `merchant_regex` TEXT, `reference_regex` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, FOREIGN KEY (`bank_id`) REFERENCES `user_banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_sms_templates_bank_id` ON `sms_templates` (`bank_id`)")
+        }
+    }
+
+    val MIGRATION_32_33 = MIGRATION_31_33
 }
 
 /**
