@@ -746,9 +746,10 @@ private suspend fun saveParsedTransaction(
             parsedTransaction.balance != null &&
             parsedTransaction.accountLast4 != null
         ) {
+            val safeAccountLast4 = parsedTransaction.accountLast4!!
             val existingBalance = accountBalanceRepository.getLatestBalance(
                 parsedTransaction.bankName,
-                parsedTransaction.accountLast4
+                safeAccountLast4
             )?.balance
             if (existingBalance != null) {
                 val result = SmartParser.inferTypeFromBalance(
@@ -883,10 +884,11 @@ private suspend fun saveParsedTransaction(
             )
 
             // Handle small gap: create synthetic transaction for missing SMS
+            val gapAmount = inferenceResult?.gapAmount
             if (inferenceResult?.gapDetected == true &&
-                inferenceResult.gapAmount != null &&
-                inferenceResult.gapAmount > BigDecimal.ZERO &&
-                inferenceResult.gapAmount <= BigDecimal("50") &&
+                gapAmount != null &&
+                gapAmount > BigDecimal.ZERO &&
+                gapAmount <= BigDecimal("50") &&
                 inferenceResult.gapDirection != null
             ) {
                 createSyntheticGapTransaction(inferenceResult, parsedTransaction, finalEntity)
