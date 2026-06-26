@@ -587,6 +587,14 @@ private fun CreditCardItem(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            if (card.hasGap) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = "Missing transactions detected",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -816,6 +824,14 @@ private fun AccountItem(
                                     contentDescription = "Hidden",
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (account.hasGap) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = "Missing transactions detected",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.error
                                 )
                             }
                         }

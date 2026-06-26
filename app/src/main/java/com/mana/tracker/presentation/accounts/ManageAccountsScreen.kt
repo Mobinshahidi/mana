@@ -587,27 +587,26 @@ private fun CreditCardItem(
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
                             }
+                            if (card.hasGap) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = "Missing transactions detected",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
             }
             
-            // Credit Card Details
+
+            // Balance
             Column(
-                verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                horizontalAlignment = Alignment.End
             ) {
-                // Outstanding Balance
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = "Outstanding",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Text(
-                        text = CurrencyFormatter.formatCurrency(card.balance, card.currency),
+                Text(
+                    text = CurrencyFormatter.formatCurrency(card.balance, card.currency),
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
                         color = if (card.balance > BigDecimal.ZERO) {
@@ -816,6 +815,14 @@ private fun AccountItem(
                                     contentDescription = "Hidden",
                                     modifier = Modifier.size(16.dp),
                                     tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (account.hasGap) {
+                                Icon(
+                                    Icons.Default.Warning,
+                                    contentDescription = "Missing transactions detected",
+                                    modifier = Modifier.size(16.dp),
+                                    tint = MaterialTheme.colorScheme.error
                                 )
                             }
                         }

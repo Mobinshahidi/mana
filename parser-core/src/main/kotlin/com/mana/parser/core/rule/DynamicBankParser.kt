@@ -12,7 +12,7 @@ class DynamicBankParser(private val config: BankConfig) {
     }
 
     fun parse(message: String, sender: String? = null): ParseResult? {
-        val cleanMessage = message.trim()
+        val cleanMessage = normalizePersianDigits(message.trim())
 
         if (!isTransactionMessage(cleanMessage)) return null
 
@@ -131,6 +131,27 @@ class DynamicBankParser(private val config: BankConfig) {
         if (extractField(message, config.balancePatterns) != null) score += 0.2f
         if (config.transactionIndicators.any { message.lowercase().contains(it.lowercase()) }) score += 0.1f
         return score.coerceIn(0f, 1f)
+    }
+
+    private fun normalizePersianDigits(text: String): String {
+        return text
+            .replace('۰', '0').replace('٠', '0')
+            .replace('۱', '1').replace('١', '1')
+            .replace('۲', '2').replace('٢', '2')
+            .replace('۳', '3').replace('٣', '3')
+            .replace('۴', '4').replace('٤', '4')
+            .replace('۵', '5').replace('٥', '5')
+            .replace('۶', '6').replace('٦', '6')
+            .replace('۷', '7').replace('٧', '7')
+            .replace('۸', '8').replace('٨', '8')
+            .replace('۹', '9').replace('٩', '9')
+            .replace('ي', 'ی')
+            .replace('ك', 'ک')
+            .replace("\u200C", " ")
+            .replace("\u200D", "")
+            .replace("\u200E", "")
+            .replace("\u200F", "")
+            .trim()
     }
 
     fun matchScore(message: String): Float {

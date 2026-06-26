@@ -54,5 +54,8 @@ data class AccountBalanceEntity(
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
     @ColumnInfo(name = "currency", defaultValue = "INR")
-    val currency: String = "INR"
+    val currency: String = "INR",
+
+    @ColumnInfo(name = "has_gap", defaultValue = "0")
+    val hasGap: Boolean = false
 )

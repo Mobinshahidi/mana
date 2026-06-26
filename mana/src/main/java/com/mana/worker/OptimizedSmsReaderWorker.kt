@@ -9,7 +9,9 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import com.mana.parser.core.ParsedTransaction
+import com.mana.parser.core.TransactionType as ParserTransactionType
 import com.mana.parser.core.bank.BankParserFactory
+import com.mana.parser.core.rule.SmartParser
 
 import com.mana.data.database.entity.AccountBalanceEntity
 import com.mana.data.database.entity.TransactionType
@@ -39,6 +41,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.math.BigDecimal
+import java.security.MessageDigest
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -734,8 +737,54 @@ private suspend fun saveParsedTransaction(
     sms: SmsMessage
 ): Boolean {
     return try {
+        // Infer type from balance if the SMS uses ambiguous keywords (e.g., انتقال)
+        val inferenceResult: SmartParser.BalanceInferenceResult?
+        val effectiveTransaction: ParsedTransaction
+
+        if (
+            parsedTransaction.type == ParserTransactionType.TRANSFER &&
+            parsedTransaction.balance != null &&
+            parsedTransaction.accountLast4 != null
+        ) {
+            val existingBalance = accountBalanceRepository.getLatestBalance(
+                parsedTransaction.bankName,
+                parsedTransaction.accountLast4
+            )?.balance
+            if (existingBalance != null) {
+                val result = SmartParser.inferTypeFromBalance(
+                    amount = parsedTransaction.amount,
+                    balance = parsedTransaction.balance,
+                    knownPreviousBalance = existingBalance,
+                    tolerance = BigDecimal("50")
+                )
+                if (result.type != null) {
+                    if (result.gapDetected) {
+                        Log.d(TAG, "Inferred TRANSFER as ${result.type} (gap=${result.gapAmount}, small SMS missing)")
+                    } else {
+                        Log.d(TAG, "Inferred TRANSFER type from balance: ${result.type}")
+                    }
+                    inferenceResult = result
+                    effectiveTransaction = parsedTransaction.copy(type = result.type!!)
+                } else {
+                    if (result.isBankPause) {
+                        Log.w(TAG, "Bank pause: balance delta ${result.gapAmount} doesn't match transaction, keeping as TRANSFER")
+                    } else {
+                        Log.d(TAG, "Could not infer TRANSFER type from balance (SMS may be missing)")
+                    }
+                    inferenceResult = result
+                    effectiveTransaction = parsedTransaction
+                }
+            } else {
+                inferenceResult = null
+                effectiveTransaction = parsedTransaction
+            }
+        } else {
+            inferenceResult = null
+            effectiveTransaction = parsedTransaction
+        }
+
         // Convert to entity and save
-        val entity = parsedTransaction.toEntity()
+        val entity = effectiveTransaction.toEntity()
 
         // Check if this transaction was previously deleted by the user
         val existingTransaction = transactionRepository.getTransactionByHash(entity.transactionHash)
@@ -826,7 +875,23 @@ private suspend fun saveParsedTransaction(
             }
 
             // Process balance updates
-            processBalanceUpdate(parsedTransaction, finalEntity, rowId)
+            val bankPause = inferenceResult?.isBankPause == true
+            processBalanceUpdate(
+                parsedTransaction, finalEntity, rowId,
+                hasGap = bankPause,
+                sourceTypeOverride = if (bankPause) "BANK_PAUSE" else null
+            )
+
+            // Handle small gap: create synthetic transaction for missing SMS
+            if (inferenceResult?.gapDetected == true &&
+                inferenceResult.gapAmount != null &&
+                inferenceResult.gapAmount > BigDecimal.ZERO &&
+                inferenceResult.gapAmount <= BigDecimal("50") &&
+                inferenceResult.gapDirection != null
+            ) {
+                createSyntheticGapTransaction(inferenceResult, parsedTransaction, finalEntity)
+            }
+
             return true
         } else {
             Log.d(
@@ -844,7 +909,9 @@ private suspend fun saveParsedTransaction(
 private suspend fun processBalanceUpdate(
     parsedTransaction: ParsedTransaction,
     entity: com.mana.data.database.entity.TransactionEntity,
-    rowId: Long
+    rowId: Long,
+    hasGap: Boolean = false,
+    sourceTypeOverride: String? = null
 ) {
     if (parsedTransaction.accountLast4 != null) {
         // Determine if this transaction is from a card based on the message pattern
@@ -1027,8 +1094,9 @@ private suspend fun processBalanceUpdate(
                     creditLimit = existingAccount?.creditLimit, // Keep existing credit limit
                     isCreditCard = isCreditCard || (existingAccount?.isCreditCard ?: false),
                     smsSource = parsedTransaction.smsBody.take(500),  // Store SMS snippet
-                    sourceType = "TRANSACTION",
-                    currency = parsedTransaction.currency
+                    sourceType = sourceTypeOverride ?: "TRANSACTION",
+                    currency = parsedTransaction.currency,
+                    hasGap = hasGap
                 )
 
                 accountBalanceRepository.insertBalance(balanceEntity)
@@ -1426,6 +1494,61 @@ private fun extractTextFromRcsJson(json: String): String? {
         // Not JSON, return as plain text
         json
     }
+}
+
+private suspend fun createSyntheticGapTransaction(
+    inferenceResult: SmartParser.BalanceInferenceResult,
+    parsedTransaction: ParsedTransaction,
+    parentEntity: com.mana.data.database.entity.TransactionEntity
+) {
+    val gapAmount = inferenceResult.gapAmount ?: return
+    val direction = inferenceResult.gapDirection ?: return
+    if (gapAmount <= BigDecimal.ZERO) return
+
+    val gapHash = generateGapHash(parsedTransaction, parentEntity, gapAmount)
+
+    val existing = transactionRepository.getTransactionByHash(gapHash)
+    if (existing != null) {
+        if (existing.isDeleted) {
+            Log.d(TAG, "Skipping previously deleted gap transaction: $gapHash")
+        }
+        return
+    }
+
+    val gapTransaction = com.mana.data.database.entity.TransactionEntity(
+        amount = gapAmount,
+        merchantName = "Missing SMS",
+        category = "Others",
+        transactionType = direction.toEntityType(),
+        dateTime = parentEntity.dateTime,
+        description = null,
+        smsBody = null,
+        bankName = parsedTransaction.bankName,
+        smsSender = null,
+        accountNumber = parsedTransaction.accountLast4,
+        balanceAfter = null,
+        transactionHash = gapHash,
+        isRecurring = false,
+        createdAt = LocalDateTime.now(),
+        updatedAt = LocalDateTime.now(),
+        currency = parsedTransaction.currency
+    )
+
+    val rowId = transactionRepository.insertTransaction(gapTransaction)
+    if (rowId != -1L) {
+        Log.d(TAG, "Created synthetic transaction for missing SMS: gap=$gapAmount hash=$gapHash")
+    }
+}
+
+private fun generateGapHash(
+    parsedTransaction: ParsedTransaction,
+    parentEntity: com.mana.data.database.entity.TransactionEntity,
+    gapAmount: BigDecimal
+): String {
+    val data = "GAP_${parsedTransaction.bankName}_${parsedTransaction.accountLast4}_${parentEntity.transactionHash}_${gapAmount}"
+    return MessageDigest.getInstance("MD5")
+        .digest(data.toByteArray())
+        .joinToString("") { "%02x".format(it) }
 }
 
 data class ProcessingResult(

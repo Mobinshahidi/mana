@@ -41,7 +41,9 @@ interface AccountBalanceDao {
             ab1.is_credit_card,
             ab1.sms_source,
             ab1.source_type,
-            ab1.currency
+            ab1.account_type,
+            ab1.currency,
+            ab1.has_gap
         FROM account_balances ab1
         INNER JOIN (
             SELECT bank_name, account_last4, MAX(timestamp) as max_timestamp
@@ -74,7 +76,9 @@ interface AccountBalanceDao {
             ab1.is_credit_card,
             ab1.sms_source,
             ab1.source_type,
-            ab1.currency
+            ab1.account_type,
+            ab1.currency,
+            ab1.has_gap
         FROM account_balances ab1
         INNER JOIN (
             SELECT bank_name, account_last4, MAX(timestamp) as max_timestamp
