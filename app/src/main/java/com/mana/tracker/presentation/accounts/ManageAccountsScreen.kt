@@ -662,7 +662,6 @@ private fun CreditCardItem(
                         )
                     }
                 }
-            }
 
             // Action Buttons - Primary action + overflow menu
             var showMenu by remember { mutableStateOf(false) }

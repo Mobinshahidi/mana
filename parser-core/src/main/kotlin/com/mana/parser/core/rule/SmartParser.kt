@@ -16,15 +16,15 @@ data class SmartParseResult(
     val rawMessage: String
 )
 
-data class BalanceInferenceResult(
-    val type: TransactionType?,
-    val gapDetected: Boolean,
-    val gapAmount: BigDecimal?,
-    val isBankPause: Boolean,
-    val gapDirection: TransactionType? = null
-)
-
 object SmartParser {
+
+    data class BalanceInferenceResult(
+        val type: TransactionType?,
+        val gapDetected: Boolean,
+        val gapAmount: BigDecimal?,
+        val isBankPause: Boolean,
+        val gapDirection: TransactionType? = null
+    )
 
     fun parse(message: String, sender: String? = null): SmartParseResult? {
         val clean = message.trim()
