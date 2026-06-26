@@ -76,7 +76,8 @@ class DynamicBankParser(private val config: BankConfig) {
                 for (rule in config.amountPatterns) {
                     try {
                         val pattern = Regex(rule.regex)
-                        pattern.find(message)?.let { m ->
+                        val m = pattern.find(message)
+                        if (m != null) {
                             val full = m.groupValues.getOrNull(0) ?: continue
                             return if (full.startsWith("+")) "INCOME"
                             else if (full.startsWith("-")) "EXPENSE"
@@ -90,7 +91,8 @@ class DynamicBankParser(private val config: BankConfig) {
                 for (rule in config.amountPatterns) {
                     try {
                         val pattern = Regex(rule.regex)
-                        pattern.find(message)?.let { m ->
+                        val m = pattern.find(message)
+                        if (m != null) {
                             val full = m.groupValues.getOrNull(0) ?: continue
                             return if (full.endsWith("+")) "INCOME"
                             else if (full.endsWith("-")) "EXPENSE"
