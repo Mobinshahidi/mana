@@ -192,7 +192,6 @@ class SmsTransactionProcessor @Inject constructor(
                 )
 
                 // Handle small gap: create synthetic transaction for missing SMS
-                val gapAmount = inferenceResult?.gapAmount
                 if (inferenceResult?.gapDetected == true &&
                     gapAmount != null &&
                     gapAmount > BigDecimal.ZERO &&
