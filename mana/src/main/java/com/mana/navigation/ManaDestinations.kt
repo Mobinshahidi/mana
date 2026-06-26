@@ -53,3 +53,15 @@ object MonthlyBudget
 
 @Serializable
 object MonthlyBudgetSettings
+
+@Serializable
+object CustomBanks
+
+@Serializable
+data class AddEditBank(val bankId: Long = -1L)
+
+@Serializable
+data class BankTemplates(val bankId: Long)
+
+@Serializable
+data class AddEditTemplate(val bankId: Long, val templateId: Long = -1L)

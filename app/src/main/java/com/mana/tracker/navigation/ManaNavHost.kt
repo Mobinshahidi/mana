@@ -96,6 +96,9 @@ fun ManaNavHost(
                 },
                 onNavigateToBudgets = {
                     navController.navigate(MonthlyBudget)
+                },
+                onNavigateToCustomBanks = {
+                    navController.navigate(CustomBanks)
                 }
             )
         }
@@ -252,6 +255,62 @@ fun ManaNavHost(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        composable<CustomBanks>(
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) {
+            com.mana.tracker.ui.screens.custombanks.CustomBanksScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onAddBank = { navController.navigate(AddEditBank()) },
+                onEditBank = { bankId -> navController.navigate(AddEditBank(bankId)) },
+                onViewTemplates = { bankId -> navController.navigate(BankTemplates(bankId)) }
+            )
+        }
+
+        composable<AddEditBank>(
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val route = backStackEntry.toRoute<AddEditBank>()
+            com.mana.tracker.ui.screens.custombanks.AddEditBankScreen(
+                bankId = route.bankId,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<BankTemplates>(
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val route = backStackEntry.toRoute<BankTemplates>()
+            com.mana.tracker.ui.screens.custombanks.BankTemplatesScreen(
+                bankId = route.bankId,
+                onNavigateBack = { navController.popBackStack() },
+                onAddTemplate = { bankId -> navController.navigate(AddEditTemplate(bankId)) },
+                onEditTemplate = { bankId, templateId -> navController.navigate(AddEditTemplate(bankId, templateId)) }
+            )
+        }
+
+        composable<AddEditTemplate>(
+            enterTransition = { EnterTransition.None },
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None },
+            popExitTransition = { ExitTransition.None }
+        ) { backStackEntry ->
+            val route = backStackEntry.toRoute<AddEditTemplate>()
+            com.mana.tracker.ui.screens.custombanks.AddEditTemplateScreen(
+                bankId = route.bankId,
+                templateId = route.templateId,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

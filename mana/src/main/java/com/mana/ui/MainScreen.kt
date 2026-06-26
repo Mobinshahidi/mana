@@ -314,6 +314,11 @@ onNavigateToBudgets = {
 rootNavController?.navigate(
 com.mana.navigation.MonthlyBudget
 )
+},
+onNavigateToCustomBanks = {
+rootNavController?.navigate(
+com.mana.navigation.CustomBanks
+)
 }
 )
 }

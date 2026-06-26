@@ -314,6 +314,11 @@ fun MainScreen(
                         rootNavController?.navigate(
                             com.mana.tracker.navigation.MonthlyBudget
                         )
+                    },
+                    onNavigateToCustomBanks = {
+                        rootNavController?.navigate(
+                            com.mana.tracker.navigation.CustomBanks
+                        )
                     }
                 )
             }
