@@ -180,18 +180,37 @@ class AddEditTemplateViewModel @Inject constructor(
                     JSONObject().apply { put("keyword", k); put("type", v) }
                 }).toString()
             }
-            val entity = SmsTemplateEntity(
-                id = if (existingId > 0) existingId else 0,
-                bankId = bankId,
-                name = s.name,
-                transactionType = s.transactionType,
-                typeKeywords = typeKeywordsJson,
-                amountRegex = s.amountRegex.ifBlank { null },
-                balanceRegex = s.balanceRegex.ifBlank { null },
-                accountRegex = s.accountRegex.ifBlank { null },
-                merchantRegex = s.merchantRegex.ifBlank { null },
-                referenceRegex = s.referenceRegex.ifBlank { null }
-            )
+            val entity = if (existingId > 0) {
+                val existing = smsTemplateRepository.getTemplateById(existingId)
+                if (existing != null) {
+                    existing.copy(
+                        name = s.name,
+                        transactionType = s.transactionType,
+                        typeKeywords = typeKeywordsJson,
+                        amountRegex = s.amountRegex.ifBlank { null },
+                        balanceRegex = s.balanceRegex.ifBlank { null },
+                        accountRegex = s.accountRegex.ifBlank { null },
+                        merchantRegex = s.merchantRegex.ifBlank { null },
+                        referenceRegex = s.referenceRegex.ifBlank { null },
+                        updatedAt = java.time.LocalDateTime.now()
+                    )
+                } else {
+                    _uiState.value = s.copy(isSaving = false, error = "Template not found")
+                    return@launch
+                }
+            } else {
+                SmsTemplateEntity(
+                    bankId = bankId,
+                    name = s.name,
+                    transactionType = s.transactionType,
+                    typeKeywords = typeKeywordsJson,
+                    amountRegex = s.amountRegex.ifBlank { null },
+                    balanceRegex = s.balanceRegex.ifBlank { null },
+                    accountRegex = s.accountRegex.ifBlank { null },
+                    merchantRegex = s.merchantRegex.ifBlank { null },
+                    referenceRegex = s.referenceRegex.ifBlank { null }
+                )
+            }
             if (existingId > 0) smsTemplateRepository.update(entity)
             else smsTemplateRepository.insert(entity)
             _uiState.value = _uiState.value.copy(isSaving = false, saved = true)
