@@ -1,6 +1,6 @@
 package com.mana.tracker.ui.screens.custombanks
 
-import android.app.Application
+import android.content.Context
 import android.provider.Telephony
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -28,7 +28,7 @@ data class AddEditBankUiState(
 
 @HiltViewModel
 class AddEditBankViewModel @Inject constructor(
-    @ApplicationContext private val application: Application,
+    @ApplicationContext private val context: Context,
     private val userBankRepository: UserBankRepository
 ) : ViewModel() {
 
@@ -72,7 +72,7 @@ class AddEditBankViewModel @Inject constructor(
             val senders = withContext(Dispatchers.IO) {
                 val senderSet = mutableSetOf<String>()
                 try {
-                    val cursor = application.contentResolver.query(
+                    val cursor = context.contentResolver.query(
                         Telephony.Sms.CONTENT_URI,
                         arrayOf(Telephony.Sms.ADDRESS),
                         "${Telephony.Sms.TYPE} = ?",
