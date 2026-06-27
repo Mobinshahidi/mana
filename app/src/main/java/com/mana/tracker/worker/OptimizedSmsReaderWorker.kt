@@ -11,7 +11,9 @@ import androidx.work.workDataOf
 import com.mana.parser.core.ParsedTransaction
 import com.mana.parser.core.TransactionType as ParserTransactionType
 import com.mana.parser.core.bank.BankParserFactory
+import com.mana.parser.core.rule.SmartParseResult
 import com.mana.parser.core.rule.SmartParser
+import com.mana.tracker.data.parser.CustomSmsParser
 
 import com.mana.tracker.data.database.entity.AccountBalanceEntity
 import com.mana.tracker.data.database.entity.TransactionType
@@ -68,7 +70,8 @@ class OptimizedSmsReaderWorker @AssistedInject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val unrecognizedSmsRepository: UnrecognizedSmsRepository,
     private val ruleRepository: RuleRepository,
-    private val ruleEngine: RuleEngine
+    private val ruleEngine: RuleEngine,
+    private val customSmsParser: CustomSmsParser
 ) : CoroutineWorker(appContext, workerParams) {
 
     companion object {
@@ -216,7 +219,7 @@ class OptimizedSmsReaderWorker @AssistedInject constructor(
 
             // Process messages in parallel for maximum speed
             val processingTime = measureTimeMillis {
-                processMessagesInParallel(messages, stats, batchSize, parallelism)
+                processMessagesInParallel(messages, stats, batchSize, parallelism, customSmsParser)
             }
 
             stats.updateTimeElapsed()
@@ -291,10 +294,26 @@ class OptimizedSmsReaderWorker @AssistedInject constructor(
                     val senderUpper = sms.sender.uppercase()
                     if (senderUpper.endsWith("-P") || senderUpper.endsWith("-G")) {
                         Log.d(TAG, "Skipping promotional/government SMS from: ${sms.sender}")
-                        continue
-                    }
+                    continue
+                        }
 
-                    val parser = BankParserFactory.getParser(sms.sender)
+                        // Try custom user-defined parser first
+                        val customResult = customSmsParser.parse(sms.body, sms.sender)
+                        if (customResult != null) {
+                            val parsedTransaction = customResult.toParsedTransaction(
+                                sms.sender, sms.timestamp
+                            )
+                            parsedCount++
+                            Log.d(
+                                TAG,
+                                "Custom parser matched: ${parsedTransaction.amount} from ${parsedTransaction.bankName}"
+                            )
+                            val success = saveParsedTransaction(parsedTransaction, sms)
+                            if (success) savedCount++
+                            continue
+                        }
+
+                        val parser = BankParserFactory.getParser(sms.sender)
                     if (parser != null) {
                         Log.d(
                             TAG,
@@ -406,7 +425,8 @@ private suspend fun processMessagesInParallel(
     messages: List<SmsMessage>,
     stats: ProcessingStats,
     batchSize: Int,
-    parallelism: Int
+    parallelism: Int,
+    customSmsParser: CustomSmsParser
 ) = coroutineScope {
     val totalBatches = (messages.size + batchSize - 1) / batchSize
 
@@ -427,7 +447,8 @@ private suspend fun processMessagesInParallel(
                 atomicParsed,
                 atomicSaved,
                 batchSize,
-                parallelism
+                parallelism,
+                customSmsParser
             )
         }
     }
@@ -617,7 +638,8 @@ private suspend fun processBatchCoroutinesDirect(
     atomicParsed: java.util.concurrent.atomic.AtomicInteger,
     atomicSaved: java.util.concurrent.atomic.AtomicInteger,
     batchSize: Int,
-    parallelism: Int
+    parallelism: Int,
+    customSmsParser: CustomSmsParser
 ): ProcessingResult {
     var parsedCount = 0
     var savedCount = 0
@@ -642,6 +664,26 @@ private suspend fun processBatchCoroutinesDirect(
                 // Skip promotional (-P) and government (-G) messages
                 val senderUpper = sms.sender.uppercase()
                 if (senderUpper.endsWith("-P") || senderUpper.endsWith("-G")) {
+                    continue
+                }
+
+                // Try custom user-defined parser first
+                val customResult = customSmsParser.parse(sms.body, sms.sender)
+                if (customResult != null) {
+                    val parsedTransaction = customResult.toParsedTransaction(
+                        sms.sender, sms.timestamp
+                    )
+                    parsedCount++
+                    atomicParsed.incrementAndGet()
+                    Log.d(
+                        TAG,
+                        "Custom parser matched: ${parsedTransaction.amount} from ${parsedTransaction.bankName}"
+                    )
+                    val success = saveParsedTransaction(parsedTransaction, sms)
+                    if (success) {
+                        savedCount++
+                        atomicSaved.incrementAndGet()
+                    }
                     continue
                 }
 
@@ -715,6 +757,37 @@ private suspend fun processBatchCoroutinesDirect(
         subscriptionCount = subscriptionCount,
         coroutineId = coroutineId,
         batchNumber = startBatch
+    )
+}
+
+private fun SmartParseResult.toParsedTransaction(
+    sender: String,
+    timestamp: Long
+): ParsedTransaction {
+    val safeAmount = amount ?: java.math.BigDecimal.ZERO
+    val safeType = type?.let {
+        when (it) {
+            com.mana.parser.core.TransactionType.INCOME -> com.mana.parser.core.TransactionType.INCOME
+            com.mana.parser.core.TransactionType.EXPENSE -> com.mana.parser.core.TransactionType.EXPENSE
+            com.mana.parser.core.TransactionType.CREDIT -> com.mana.parser.core.TransactionType.CREDIT
+            com.mana.parser.core.TransactionType.TRANSFER -> com.mana.parser.core.TransactionType.TRANSFER
+            com.mana.parser.core.TransactionType.INVESTMENT -> com.mana.parser.core.TransactionType.INVESTMENT
+            com.mana.parser.core.TransactionType.BALANCE_UPDATE -> com.mana.parser.core.TransactionType.BALANCE_UPDATE
+        }
+    } ?: com.mana.parser.core.TransactionType.TRANSFER
+    val safeBank = bankName ?: sender
+    return ParsedTransaction(
+        amount = safeAmount,
+        type = safeType,
+        merchant = merchant,
+        reference = reference,
+        accountLast4 = accountLast4,
+        balance = balance,
+        smsBody = rawMessage,
+        sender = sender,
+        timestamp = timestamp,
+        bankName = safeBank,
+        currency = "IRR"
     )
 }
 
