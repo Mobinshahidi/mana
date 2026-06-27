@@ -110,8 +110,6 @@ class AddEditTemplateViewModel @Inject constructor(
 
             when {
                 (hasAmountWord || hasPurchaseWord || hasWithdrawWord || hasDepositWord) && numbers.isNotEmpty() -> {
-                    val num = numbers.first()
-                    amountRegex = "(${Regex.escape(num.replace(",", "").replace(Regex("\\d").toRegex(), "\\\\d"))}"
                     amountRegex = "(\\\\d[\\\\d,]*)"
                     if (hasPurchaseWord && detectedType == null) detectedType = "EXPENSE"
                     if (hasDepositWord && detectedType == null) detectedType = "INCOME"
