@@ -410,7 +410,7 @@ abstract class ManaDatabase : RoomDatabase() {
             db.execSQL("CREATE TABLE IF NOT EXISTS `sms_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `bank_id` INTEGER NOT NULL, `name` TEXT NOT NULL, `transaction_type` TEXT, `type_keywords` TEXT, `amount_regex` TEXT, `balance_regex` TEXT, `account_regex` TEXT, `merchant_regex` TEXT, `reference_regex` TEXT, `is_active` INTEGER NOT NULL DEFAULT 1, `created_at` TEXT NOT NULL, `updated_at` TEXT NOT NULL, FOREIGN KEY (`bank_id`) REFERENCES `user_banks`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_sms_templates_bank_id` ON `sms_templates` (`bank_id`)")
         }
-    }
+        }
 
     val MIGRATION_32_33 = MIGRATION_31_33
     }
@@ -444,7 +444,7 @@ abstract class ManaDatabase : RoomDatabase() {
         columnName = "sessionId"
     )
 )
-class Migration4To5 : AutoMigrationSpec
+class Migration4To5 : AutoMigrationSpec {}
 
 /**
  * Migration from version 7 to 8.

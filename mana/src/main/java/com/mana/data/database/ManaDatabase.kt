@@ -444,7 +444,7 @@ tableName = "chat_messages",
 columnName = "sessionId"
 )
 )
-class Migration4To5 : AutoMigrationSpec
+class Migration4To5 : AutoMigrationSpec {}
 
 /**
 * Migration from version 7 to 8.
