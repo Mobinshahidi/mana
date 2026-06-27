@@ -161,6 +161,36 @@ fun AddEditTemplateScreen(
                 }
             }
 
+            // Paste SMS (Auto-detect)
+            ManaCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(Dimensions.Padding.content),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    Text("Quick Setup: Paste SMS", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Medium)
+                    Text(
+                        "Paste a real SMS from this bank to auto-detect patterns",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = uiState.sampleSms,
+                        onValueChange = viewModel::updateSampleSms,
+                        label = { Text("Sample SMS") },
+                        placeholder = { Text("Paste an SMS from this bank...") },
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 120.dp),
+                        maxLines = 6
+                    )
+                    Button(
+                        onClick = viewModel::autoDetectFromSample,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = uiState.sampleSms.isNotBlank()
+                    ) {
+                        Text("Auto-detect Patterns")
+                    }
+                }
+            }
+
             // Regex Fields
             ManaCard(modifier = Modifier.fillMaxWidth()) {
                 Column(

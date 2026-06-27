@@ -24,6 +24,7 @@ data class AddEditTemplateUiState(
     val accountRegex: String = "",
     val merchantRegex: String = "",
     val referenceRegex: String = "",
+    val sampleSms: String = "",
     val isSaving: Boolean = false,
     val saved: Boolean = false,
     val error: String? = null
@@ -69,6 +70,85 @@ class AddEditTemplateViewModel @Inject constructor(
     fun updateReferenceRegex(v: String) { _uiState.value = _uiState.value.copy(referenceRegex = v, error = null) }
     fun updateTypeKeywordKey(v: String) { _uiState.value = _uiState.value.copy(typeKeywordKey = v) }
     fun updateTypeKeywordValue(v: String) { _uiState.value = _uiState.value.copy(typeKeywordValue = v) }
+    fun updateSampleSms(v: String) { _uiState.value = _uiState.value.copy(sampleSms = v) }
+
+    fun autoDetectFromSample() {
+        val text = _uiState.value.sampleSms
+        if (text.isBlank()) return
+        val lines = text.lines().map { it.trim() }.filter { it.isNotBlank() }
+        if (lines.isEmpty()) return
+
+        val persianAmountWords = setOf("مبلغ", "ریال")
+        val persianPurchaseWords = setOf("خرید", "خريد", "خرید", "سایر")
+        val persianDepositWords = setOf("واریز", "واريز", "بستانکار", "بستانكار")
+        val persianWithdrawWords = setOf("برداشت", "برداشت", "بدهکار", "بدهكار", "سود")
+        val persianBalanceWords = setOf("مانده", "موجودی", "موجودي")
+        val persianCardWords = setOf("كارت", "کارت", "كارتحساب", "شماره", "شمارهحساب", "حساب")
+        val persianRefWords = setOf("پیگیری", "پيگيري", "شمارهپیگیری", "شمارهپيگيري", "سند")
+
+        var amountRegex = ""
+        var balanceRegex = ""
+        var accountRegex = ""
+        var merchantRegex = ""
+        var referenceRegex = ""
+        val detectedKeywords = mutableListOf<Pair<String, String>>()
+        var detectedType: String? = null
+
+        val numberPattern = Regex("[\\d,]+")
+        val cardPattern = Regex("\\d{4,}")
+
+        for (line in lines) {
+            val lineClean = line.replace(":", "").replace(":", "").trim()
+            val hasAmountWord = persianAmountWords.any { lineClean.contains(it) }
+            val hasPurchaseWord = persianPurchaseWords.any { lineClean.contains(it) }
+            val hasDepositWord = persianDepositWords.any { lineClean.contains(it) }
+            val hasWithdrawWord = persianWithdrawWords.any { lineClean.contains(it) }
+            val hasBalanceWord = persianBalanceWords.any { lineClean.contains(it) }
+            val hasCardWord = persianCardWords.any { lineClean.contains(it) }
+            val hasRefWord = persianRefWords.any { lineClean.contains(it) }
+            val numbers = numberPattern.findAll(line).map { it.value }.toList()
+
+            when {
+                (hasAmountWord || hasPurchaseWord || hasWithdrawWord || hasDepositWord) && numbers.isNotEmpty() -> {
+                    val num = numbers.first()
+                    amountRegex = "(${Regex.escape(num.replace(",", "").replace(Regex("\\d").toRegex(), "\\\\d"))}"
+                    amountRegex = "(\\\\d[\\\\d,]*)"
+                    if (hasPurchaseWord && detectedType == null) detectedType = "EXPENSE"
+                    if (hasDepositWord && detectedType == null) detectedType = "INCOME"
+                    if (hasWithdrawWord && detectedType == null) detectedType = "EXPENSE"
+
+                    val purchaseKw = persianPurchaseWords.firstOrNull { lineClean.contains(it) }
+                    val depositKw = persianDepositWords.firstOrNull { lineClean.contains(it) }
+                    val withdrawKw = persianWithdrawWords.firstOrNull { lineClean.contains(it) }
+                    if (purchaseKw != null) detectedKeywords.add(purchaseKw to "EXPENSE")
+                    if (depositKw != null) detectedKeywords.add(depositKw to "INCOME")
+                    if (withdrawKw != null) detectedKeywords.add(withdrawKw to "EXPENSE")
+                }
+                hasBalanceWord && numbers.isNotEmpty() -> {
+                    balanceRegex = "(\\\\d[\\\\d,]*)"
+                }
+                hasCardWord && numbers.isNotEmpty() -> {
+                    val num = numbers.first()
+                    if (num.length >= 4) {
+                        accountRegex = "(${num.take(4)}\\\\d*)"
+                    }
+                }
+                hasRefWord && numbers.isNotEmpty() -> {
+                    referenceRegex = "(\\\\d+)"
+                }
+            }
+        }
+
+        _uiState.value = _uiState.value.copy(
+            amountRegex = _uiState.value.amountRegex.ifBlank { amountRegex },
+            balanceRegex = _uiState.value.balanceRegex.ifBlank { balanceRegex },
+            accountRegex = _uiState.value.accountRegex.ifBlank { accountRegex },
+            merchantRegex = _uiState.value.merchantRegex.ifBlank { merchantRegex },
+            referenceRegex = _uiState.value.referenceRegex.ifBlank { referenceRegex },
+            transactionType = _uiState.value.transactionType ?: detectedType,
+            typeKeywords = _uiState.value.typeKeywords.ifEmpty { detectedKeywords.distinct() }
+        )
+    }
 
     fun addKeyword() {
         val s = _uiState.value
