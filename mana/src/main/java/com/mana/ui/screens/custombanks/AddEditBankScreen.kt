@@ -1,9 +1,13 @@
 package com.mana.ui.screens.custombanks
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,7 +20,7 @@ import com.mana.ui.components.ManaScaffold
 import com.mana.ui.theme.Dimensions
 import com.mana.ui.theme.Spacing
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddEditBankScreen(
     bankId: Long = -1L,
@@ -65,11 +69,11 @@ fun AddEditBankScreen(
                     OutlinedTextField(
                         value = uiState.senderNumbers,
                         onValueChange = viewModel::updateSenderNumbers,
-                        label = { Text("Sender Numbers") },
-                        placeholder = { Text("e.g. +989123456789,+98212223344") },
+                        label = { Text("Sender IDs") },
+                        placeholder = { Text("e.g. BMELI,MELLAT,SADERAT") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        supportingText = { Text("Comma-separated phone numbers") }
+                        supportingText = { Text("Comma-separated SMS sender IDs") }
                     )
 
                     uiState.error?.let { error ->
@@ -94,6 +98,62 @@ fun AddEditBankScreen(
                 }
             }
 
+            // Detect senders card
+            ManaCard(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    modifier = Modifier.padding(Dimensions.Padding.content),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                ) {
+                    Text(
+                        "Find Sender IDs Automatically",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
+                    )
+                    Text(
+                        "Tap the button below to scan your SMS inbox and discover sender IDs. " +
+                                "Tap on a sender ID to add it to the bank.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Button(
+                        onClick = viewModel::detectSenders,
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !uiState.isDetecting
+                    ) {
+                        if (uiState.isDetecting) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(Spacing.sm))
+                        }
+                        Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(Spacing.sm))
+                        Text("Scan SMS Inbox for Senders")
+                    }
+
+                    if (uiState.detectedSenders.isNotEmpty()) {
+                        HorizontalDivider()
+                        Text(
+                            "Tap to add:",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(Spacing.xs),
+                            verticalArrangement = Arrangement.spacedBy(Spacing.xs)
+                        ) {
+                            uiState.detectedSenders.forEach { sender ->
+                                val isSelected = uiState.senderNumbers.split(",").map { it.trim() }.contains(sender)
+                                FilterChip(
+                                    selected = isSelected,
+                                    onClick = { viewModel.selectSender(sender) },
+                                    label = { Text(sender, style = MaterialTheme.typography.bodySmall) }
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
             ManaCard(modifier = Modifier.fillMaxWidth()) {
                 Row(
                     modifier = Modifier.padding(Dimensions.Padding.content),
@@ -108,14 +168,16 @@ fun AddEditBankScreen(
                     )
                     Column {
                         Text(
-                            "How to find sender numbers",
+                            "What is a Sender ID?",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Medium
                         )
                         Spacer(modifier = Modifier.height(Spacing.xs))
                         Text(
-                            "Open the SMS from your bank and look at the sender number. " +
-                                    "Enter it here (with country code). You can add multiple numbers separated by commas.",
+                            "The Sender ID is the name or number that appears as the sender of the SMS. " +
+                                    "For Iranian banks this is usually a shortcode like BMELI, MELLAT, SADERAT, TEJARAT, etc. " +
+                                    "You can find it by opening an SMS from your bank in the messaging app and looking at the sender field. " +
+                                    "Add multiple sender IDs separated by commas.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
